@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "Universal URL Opener",
+  "version": "2.0",
+  "description": "Quickly open URLs with base+identifier pattern. Works with Jira, GitHub, ServiceNow, and any URL-based system.",
+  "author": "Divakar Loganathan",
+  "homepage_url": "https://github.com/divakar-loganathan/universal-url-opener",
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "permissions": ["storage"]
+}

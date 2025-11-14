@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<!--
+  Universal URL Opener - Chrome Extension
+  Author: Divakar Loganathan
+  Version: 2.0
+  Description: Quick URL opening with base+identifier patterns
+-->
+<html>
+<head>
+  <title>Universal URL Opener</title>
+  <style>
+    body {
+      width: 400px;
+      padding: 15px;
+      font-family: Arial, sans-serif;
+      min-height: 400px;
+    }
+    h3 {
+      margin-top: 0;
+      color: #333;
+      text-align: center;
+    }
+    .tab-container {
+      display: flex;
+      border-bottom: 2px solid #f0f0f0;
+      margin-bottom: 15px;
+    }
+    .tab {
+      flex: 1;
+      padding: 10px;
+      text-align: center;
+      cursor: pointer;
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      font-size: 14px;
+      color: #495057;
+      transition: all 0.2s;
+    }
+    .tab:hover {
+      background: #e9ecef;
+      color: #343a40;
+    }
+    .tab.active {
+      background: #0052cc;
+      color: white;
+      border-color: #0052cc;
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block !important;
+    }
+    
+    /* Opener Tab Styles */
+    #openerTab.active {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    /* Settings Tab Styles */
+    #settingsTab.active {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    .project-options {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 15px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .project-option {
+      display: flex;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .project-option:hover {
+      background-color: #f5f5f5;
+    }
+    .project-option.selected {
+      background-color: #0052cc;
+      color: white;
+      border-color: #0052cc;
+    }
+    .project-radio {
+      margin-right: 10px;
+    }
+    .project-info {
+      flex-grow: 1;
+    }
+    .project-name {
+      font-weight: bold;
+      font-size: 14px;
+    }
+    .project-url {
+      font-size: 12px;
+      color: #777;
+      margin-top: 2px;
+    }
+    .selected .project-url {
+      color: #e0e0e0;
+    }
+    .input-group {
+      display: flex;
+      align-items: center;
+    }
+    #prefix {
+      background: #f0f0f0;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-right: none;
+      border-radius: 3px 0 0 3px;
+      color: #555;
+      font-size: 14px;
+      min-width: 70px;
+      text-align: center;
+    }
+    #ticketNumber {
+      flex-grow: 1;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 0 3px 3px 0;
+      font-size: 14px;
+    }
+    .help-text {
+      font-size: 12px;
+      color: #666;
+      text-align: center;
+      margin: 5px 0;
+    }
+    .url-preview {
+      background: #f8f9fa;
+      border: 1px solid #e9ecef;
+      border-radius: 3px;
+      padding: 8px;
+      margin-top: 8px;
+      font-size: 12px;
+    }
+    .preview-label {
+      font-weight: bold;
+      color: #28a745;
+      margin-bottom: 4px;
+    }
+    .preview-content div {
+      margin: 2px 0;
+    }
+    .preview-content span {
+      color: #0052cc;
+      font-family: monospace;
+    }
+    .no-projects {
+      text-align: center;
+      color: #999;
+      font-style: italic;
+      padding: 20px;
+    }
+    
+    /* Settings Tab Styles */
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    label {
+      font-weight: bold;
+      font-size: 12px;
+      color: #333;
+    }
+    input[type="text"], input[type="url"] {
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 3px;
+      font-size: 14px;
+    }
+    .input-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .input-row input {
+      flex: 1;
+    }
+    .btn-add-project {
+      width: 100%;
+      padding: 12px;
+      background-color: #ccc;
+      color: #666;
+      border: none;
+      border-radius: 3px;
+      cursor: not-allowed;
+      font-size: 14px;
+      font-weight: bold;
+      margin-top: 10px;
+      transition: all 0.3s;
+    }
+    .btn-add-project:not(:disabled) {
+      background-color: #28a745;
+      color: white;
+      cursor: pointer;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3);
+    }
+    .btn-add-project:not(:disabled):hover {
+      background-color: #218838;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(40, 167, 69, 0.4);
+    }
+    .btn-add-project:not(:disabled):active {
+      transform: translateY(0);
+      box-shadow: 0 1px 2px rgba(40, 167, 69, 0.3);
+    }
+    .projects-list {
+      max-height: 150px;
+      overflow-y: auto;
+      border: 1px solid #e0e0e0;
+      border-radius: 3px;
+      padding: 5px;
+    }
+    .project-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .project-item:last-child {
+      border-bottom: none;
+    }
+    .project-details {
+      flex-grow: 1;
+    }
+    .project-key {
+      font-weight: bold;
+      color: #0052cc;
+    }
+    .project-display-name {
+      font-weight: bold;
+      color: #333;
+      font-size: 14px;
+    }
+    .project-key-small {
+      font-size: 11px;
+      color: #666;
+      margin-left: 8px;
+    }
+    .project-base-url {
+      font-size: 11px;
+      color: #666;
+    }
+    .edit-name-input {
+      font-weight: bold;
+      color: #333;
+      font-size: 14px;
+      border: 1px solid #0052cc;
+      padding: 2px 4px;
+      border-radius: 2px;
+      background: #f8f9fa;
+    }
+    .project-actions {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+    }
+    .delete-btn {
+      background: #dc3545;
+      color: white;
+      border: none;
+      padding: 4px 8px;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .delete-btn:hover {
+      background: #c82333;
+    }
+    .edit-btn {
+      background: #6c757d;
+      color: white;
+      border: none;
+      padding: 4px 8px;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .edit-btn:hover {
+      background: #5a6268;
+    }
+    .save-btn {
+      background: #28a745;
+      color: white;
+      border: none;
+      padding: 4px 8px;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .save-btn:hover {
+      background: #218838;
+    }
+    .cancel-btn {
+      background: #6c757d;
+      color: white;
+      border: none;
+      padding: 4px 8px;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .cancel-btn:hover {
+      background: #5a6268;
+    }
+    
+    /* Button Styles */
+    button {
+      padding: 10px;
+      background-color: #0052cc;
+      color: white;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: bold;
+    }
+    button:hover {
+      background-color: #0043a4;
+    }
+    button:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+    .btn-small {
+      padding: 6px 12px;
+      font-size: 12px;
+    }
+    .btn-success {
+      background-color: #28a745;
+    }
+    .btn-success:hover {
+      background-color: #218838;
+    }
+    .examples-section {
+      background: #f8f9fa;
+      border: 1px solid #e9ecef;
+      border-radius: 3px;
+      padding: 12px;
+      margin-top: 10px;
+    }
+    .examples-title {
+      font-weight: bold;
+      font-size: 12px;
+      color: #495057;
+      margin-bottom: 8px;
+    }
+    .example-item {
+      font-size: 11px;
+      color: #6c757d;
+      margin: 3px 0;
+      font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+  <h3>Universal URL Opener</h3>
+  
+  <div class="tab-container">
+    <button class="tab active" data-tab="opener">Open URL</button>
+    <button class="tab" data-tab="settings">Settings</button>
+  </div>
+  
+  <!-- URL Opener Tab -->
+  <div id="openerTab" class="tab-content active">
+    <div class="project-options" id="projectOptions">
+      <div class="no-projects">
+        No URL patterns configured.<br>
+        Go to Settings to add your URL patterns.
+      </div>
+    </div>
+    
+    <div class="input-group">
+      <span id="prefix">Select Pattern</span>
+      <input type="text" id="ticketNumber" placeholder="123 or PROJ-123" autofocus disabled>
+    </div>
+    <div class="help-text">Smart parsing: Enter just the identifier or full reference</div>
+    <button type="button" id="openTicket" disabled>Open URL</button>
+  </div>
+  
+  <!-- Settings Tab -->
+  <div id="settingsTab" class="tab-content">
+    <div class="form-group">
+      <label>Add New URL Pattern</label>
+      <div class="input-row">
+        <input type="text" id="newProjectKey" placeholder="PATTERN (optional)" maxlength="10">
+        <input type="url" id="newProjectUrl" placeholder="Paste full URL (e.g., https://domain.com/browse/PROJ-123)">
+      </div>
+      <div class="input-row">
+        <input type="text" id="newProjectName" placeholder="Display Name (e.g., 'My Project', 'Work Tickets')" maxlength="30">
+      </div>
+      <div class="help-text">Paste any URL with identifier - we'll extract the base pattern automatically!</div>
+      <div class="url-preview" id="urlPreview" style="display: none;">
+        <div class="preview-label">Extracted:</div>
+        <div class="preview-content">
+          <div>Pattern: <span id="previewProject">-</span></div>
+          <div>Base URL: <span id="previewUrl">-</span></div>
+          <div>Display Name: <span id="previewName">-</span></div>
+        </div>
+      </div>
+      <button type="button" id="addProject" class="btn-add-project" disabled>+ Add Pattern</button>
+    </div>
+    
+    <div class="form-group">
+      <label>Configured URL Patterns</label>
+      <div class="projects-list" id="projectsList">
+        <div class="no-projects">No URL patterns configured yet.</div>
+      </div>
+    </div>
+    
+    <div class="form-group">
+      <div class="examples-section">
+        <div class="examples-title">Example URL Patterns:</div>
+        <div class="example-item">- Jira: https://company.atlassian.net/browse/PROJ-123</div>
+        <div class="example-item">- GitHub: https://github.com/user/repo/issues/456</div>
+        <div class="example-item">- ServiceNow: https://instance.service-now.com/nav_to.do?uri=INC123456</div>
+        <div class="example-item">- Custom: https://your-system.com/items/ID-789</div>
+      </div>
+    </div>
+    
+    <div class="form-group">
+      <button type="button" id="exportSettings">Export Settings</button>
+      <input type="file" id="importSettings" accept=".json" style="display: none;">
+      <button type="button" id="importSettingsBtn">Import Settings</button>
+    </div>
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>
