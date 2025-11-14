@@ -235,12 +235,18 @@ cd universal-url-opener
 # Load as unpacked extension in Chrome
 ```
 
-### Roadmap
-- [ ] Team configuration sharing
-- [ ] Advanced pattern templates
-- [ ] Multi-browser sync
-- [ ] Custom keyboard shortcuts
-- [ ] Bulk URL operations
+### Future Possibilities
+
+*This is a passion project developed in spare time. The following are potential enhancements that may be considered if time permits and community interest exists. No timeline or commitment is implied.*
+
+**Potential Future Enhancements:**
+- Team configuration sharing and collaborative workflows
+- Advanced pattern templates for complex enterprise systems  
+- Multi-browser sync capabilities
+- Additional customizable keyboard shortcuts
+- Bulk URL operations and batch processing
+
+**Community Contributions Welcome!** If you're interested in implementing any of these features, pull requests are appreciated.
 
 ## ⚖️ Disclaimer
 
