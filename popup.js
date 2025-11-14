@@ -58,31 +58,28 @@ document.addEventListener('DOMContentLoaded', function() {
     const urlInput = newProjectUrl.value.trim();
     const nameInput = newProjectName.value.trim();
     
-    if (urlInput) {
+    if (urlInput && isValidUrl(urlInput)) {
       const extractedInfo = extractProjectInfo(urlInput);
       if (extractedInfo) {
-        previewProject.textContent = extractedInfo.projectKey;
-        previewUrl.textContent = extractedInfo.baseUrl;
-        previewName.textContent = nameInput || extractedInfo.projectKey;
-        urlPreview.style.display = 'block';
-        
-        // Enable and update Add button
-        addProjectBtn.disabled = false;
-        const displayText = nameInput || extractedInfo.projectKey;
-        addProjectBtn.textContent = '+ Add ' + displayText;
-        
-        // Auto-fill project key if empty
-        if (!newProjectKey.value.trim()) {
-          newProjectKey.value = extractedInfo.projectKey;
-        }
-      } else {
-        urlPreview.style.display = 'none';
-        disableAddButton();
+        // Show confirmation modal instead of auto-preview
+        showConfirmationModal(extractedInfo, nameInput || generateDisplayName(extractedInfo.projectKey));
+        // Clear inputs since modal will handle the process
+        setTimeout(() => {
+          newProjectUrl.value = '';
+          newProjectKey.value = '';
+          newProjectName.value = '';
+          urlPreview.style.display = 'none';
+          addProjectBtn.disabled = true;
+          addProjectBtn.textContent = '+ Add Pattern';
+        }, 100);
+        return;
       }
-    } else {
-      urlPreview.style.display = 'none';
-      disableAddButton();
     }
+    
+    // If no valid extraction, hide preview and disable button
+    urlPreview.style.display = 'none';
+    addProjectBtn.disabled = true;
+    addProjectBtn.textContent = '+ Add Pattern';
   }
   
   // Function to disable add button
@@ -263,15 +260,81 @@ document.addEventListener('DOMContentLoaded', function() {
         }
       }
       
-      // Pattern 4: Generic /path/PREFIX-123 or /path/PREFIX123
+      // Pattern 4: Context-aware extraction with domain + path segments
       if (!extractedInfo) {
-        match = pathname.match(/\/([A-Z0-9]+)-?(\d+)(?:\/|$)/i);
+        // Extract meaningful path context for unique project keys
+        const pathSegments = pathname.split('/').filter(Boolean);
+        const domain = url.hostname.replace('www.', '').split('.')[0]; // e.g., "test1" from "www.test1.com"
+        
+        // Priority 1: Dash delimited with context - /path/PREFIX-123
+        match = pathname.match(/\/([A-Z0-9]+)-(\d+)(?:\/|$)/i);
         if (match) {
           const [fullMatch, prefix, number] = match;
-          const projectKey = prefix.toUpperCase();
+          const contextPath = getContextFromPath(pathSegments, fullMatch);
+          const projectKey = createContextualKey(domain, contextPath, prefix);
           const basePath = pathname.substring(0, pathname.indexOf(fullMatch) + 1);
           const baseUrl = `${url.protocol}//${url.host}${basePath}`;
           extractedInfo = { projectKey, baseUrl, ticketId: `${prefix}-${number}` };
+        }
+        
+        // Priority 2: Underscore delimited with context - /path/PREFIX_123
+        if (!extractedInfo) {
+          match = pathname.match(/\/([A-Z0-9]+)_(\d+)(?:\/|$)/i);
+          if (match) {
+            const [fullMatch, prefix, number] = match;
+            const contextPath = getContextFromPath(pathSegments, fullMatch);
+            const projectKey = createContextualKey(domain, contextPath, prefix);
+            const basePath = pathname.substring(0, pathname.indexOf(fullMatch) + 1);
+            const baseUrl = `${url.protocol}//${url.host}${basePath}`;
+            extractedInfo = { projectKey, baseUrl, ticketId: `${prefix}_${number}` };
+          }
+        }
+        
+        // Priority 3: Dot delimited with context - /path/PREFIX.123
+        if (!extractedInfo) {
+          match = pathname.match(/\/([A-Z0-9]+)\.(\d+)(?:\/|$)/i);
+          if (match) {
+            const [fullMatch, prefix, number] = match;
+            const contextPath = getContextFromPath(pathSegments, fullMatch);
+            const projectKey = createContextualKey(domain, contextPath, prefix);
+            const basePath = pathname.substring(0, pathname.indexOf(fullMatch) + 1);
+            const baseUrl = `${url.protocol}//${url.host}${basePath}`;
+            extractedInfo = { projectKey, baseUrl, ticketId: `${prefix}.${number}` };
+          }
+        }
+        
+        // Priority 4: Alphanumeric with context - /path/PREFIX123
+        if (!extractedInfo) {
+          match = pathname.match(/\/([A-Z]+)(\d+)(?:\/|$)/i);
+          if (match) {
+            const [fullMatch, prefix, number] = match;
+            const contextPath = getContextFromPath(pathSegments, fullMatch);
+            const projectKey = createContextualKey(domain, contextPath, prefix);
+            const basePath = pathname.substring(0, pathname.indexOf(fullMatch) + 1);
+            const baseUrl = `${url.protocol}//${url.host}${basePath}`;
+            extractedInfo = { projectKey, baseUrl, ticketId: `${prefix}${number}` };
+          }
+        }
+        
+        // Priority 5: Pure numeric with full context - /path/to/issues/1234
+        if (!extractedInfo) {
+          match = pathname.match(/\/(\d+)(?:\/|$)/);
+          if (match) {
+            const [fullMatch, number] = match;
+            const pathBeforeNumber = pathname.substring(0, pathname.indexOf(fullMatch));
+            const contextSegments = pathBeforeNumber.split('/').filter(Boolean);
+            
+            // Create unique key from domain + path context
+            let contextParts = [domain];
+            if (contextSegments.length > 0) {
+              // Take last 2 path segments for context (e.g., "projects/ticket" or "focus/ticket")
+              contextParts.push(...contextSegments.slice(-2));
+            }
+            
+            const projectKey = contextParts.map(p => p.toUpperCase()).join('_');
+            const baseUrl = `${url.protocol}//${url.host}${pathBeforeNumber}/`;
+            extractedInfo = { projectKey, baseUrl, ticketId: number };
+          }
         }
       }
       
@@ -296,6 +359,35 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
   
+  // Helper function to extract context from path segments
+  function getContextFromPath(pathSegments, fullMatch) {
+    // Find the segment containing the ticket pattern
+    for (let i = 0; i < pathSegments.length; i++) {
+      if (fullMatch.includes(pathSegments[i])) {
+        // Return the previous segment as context (e.g., "projects" or "focus")
+        return i > 0 ? pathSegments[i - 1] : null;
+      }
+    }
+    // If no direct match, take the last meaningful segment before the ticket
+    return pathSegments.length > 1 ? pathSegments[pathSegments.length - 2] : null;
+  }
+  
+  // Helper function to create contextual project key
+  function createContextualKey(domain, contextPath, ticketPrefix) {
+    const parts = [domain.toUpperCase()];
+    
+    if (contextPath) {
+      parts.push(contextPath.toUpperCase());
+    }
+    
+    if (ticketPrefix && ticketPrefix.toUpperCase() !== 'TICKET') {
+      parts.push(ticketPrefix.toUpperCase());
+    }
+    
+    // Join with underscore and limit length
+    return parts.join('_').substring(0, 20); // Max 20 chars for readability
+  }
+
   // Open ticket functionality
   openTicketBtn.addEventListener('click', openTicket);
   ticketNumber.addEventListener('keypress', function(event) {
@@ -360,13 +452,13 @@ document.addEventListener('DOMContentLoaded', function() {
       
       console.log('Projects loaded:', projects); // Debug log
       
+      // Select last used project BEFORE rendering (if valid)
+      if (lastSelected && projects.some(p => p.key === lastSelected)) {
+        selectedProject = projects.find(p => p.key === lastSelected);
+      }
+      
       renderProjects();
       renderProjectsList();
-      
-      // Select last used project
-      if (lastSelected && projects.some(p => p.key === lastSelected)) {
-        selectProject(lastSelected);
-      }
     });
   }
   
@@ -458,10 +550,20 @@ document.addEventListener('DOMContentLoaded', function() {
       openTicketBtn.disabled = false;
       ticketNumber.focus();
     } else {
-      // No project selected
-      prefixElement.textContent = 'Select Project';
-      ticketNumber.disabled = true;
-      openTicketBtn.disabled = true;
+      // No project selected - but if we have projects, allow user to select
+      if (projects.length > 1) {
+        // Multiple projects available - user needs to select one
+        prefixElement.textContent = 'Select Project';
+        ticketNumber.disabled = false;
+        openTicketBtn.disabled = false;
+        ticketNumber.placeholder = 'Select a project first or type PROJ-123';
+      } else {
+        // No projects at all
+        prefixElement.textContent = 'Select Project';
+        ticketNumber.disabled = true;
+        openTicketBtn.disabled = true;
+        ticketNumber.placeholder = '123 or PROJ-123';
+      }
     }
   }
   
@@ -589,39 +691,67 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   
   function openTicket() {
-    if (!selectedProject) {
-      alert('Please select a project first');
-      return;
-    }
-    
     let ticketInput = ticketNumber.value.trim();
     if (!ticketInput) {
       alert('Please enter a ticket number');
       ticketNumber.focus();
       return;
     }
-    
+
     // Smart parsing logic
     let finalTicketId;
+    let projectToUse = selectedProject;
     const allProjectKeys = projects.map(p => p.key);
     
     // Check if input already contains a project key
-    const hasProjectKey = allProjectKeys.some(projectKey => {
-      const pattern = new RegExp(`^${projectKey}-\\d+$`, 'i');
-      if (pattern.test(ticketInput)) {
-        finalTicketId = ticketInput.toUpperCase();
-        // Update selected project to match the detected key
-        const detectedProject = ticketInput.split('-')[0].toUpperCase();
-        if (detectedProject !== selectedProject.key) {
-          selectProject(detectedProject);
-        }
-        return true;
+    let hasProjectKey = false;
+    let detectedProject = null;
+    
+    // Method 1: Check for dash format first (PROJ-123)
+    allProjectKeys.forEach(projectKey => {
+      const dashPattern = new RegExp(`^${projectKey}-(\\d+)$`, 'i');
+      const dashMatch = ticketInput.match(dashPattern);
+      if (dashMatch && !hasProjectKey) {
+        const ticketNumber = dashMatch[1];
+        finalTicketId = `${projectKey}-${ticketNumber}`;
+        detectedProject = projects.find(p => p.key === projectKey);
+        hasProjectKey = true;
       }
-      return false;
     });
     
-    // If no project key detected, use the selected project with the number
+    // Method 2: Check for non-dash format (PROJ123) only if dash format not found
     if (!hasProjectKey) {
+      // Sort by length (longest first) to avoid partial matches
+      const sortedProjectKeys = [...allProjectKeys].sort((a, b) => b.length - a.length);
+      
+      sortedProjectKeys.forEach(projectKey => {
+        const noDashPattern = new RegExp(`^${projectKey}(\\d+)$`, 'i');
+        const noDashMatch = ticketInput.match(noDashPattern);
+        if (noDashMatch && !hasProjectKey) {
+          const ticketNumber = noDashMatch[1];
+          // Convert to standard dash format for URL
+          finalTicketId = `${projectKey}-${ticketNumber}`;
+          detectedProject = projects.find(p => p.key === projectKey);
+          hasProjectKey = true;
+        }
+      });
+    }
+    
+    // If we detected a project, select it
+    if (hasProjectKey && detectedProject) {
+      projectToUse = detectedProject;
+      // Update the selection in UI
+      selectProject(detectedProject.key);
+    }
+    
+    // If no project key detected and no project selected, ask user to select
+    if (!hasProjectKey && !hasNonDashKey && !selectedProject) {
+      alert('Please select a project first or enter a full ticket ID (e.g., PROJ-123 or PROJ123)');
+      return;
+    }
+    
+    // If no project key detected, use the selected project with the number
+    if (!hasProjectKey && !hasNonDashKey && selectedProject) {
       // Remove any project prefix that might be incorrectly included
       let cleanNumber = ticketInput;
       allProjectKeys.forEach(projectKey => {
@@ -634,6 +764,7 @@ document.addEventListener('DOMContentLoaded', function() {
       
       if (cleanNumber) {
         finalTicketId = `${selectedProject.key}-${cleanNumber}`;
+        projectToUse = selectedProject;
       } else {
         // Invalid input
         ticketNumber.style.borderColor = 'red';
@@ -644,15 +775,165 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }
     
-    // Find the correct project URL (in case project was auto-detected)
-    const projectForTicket = projects.find(p => finalTicketId.startsWith(p.key + '-'));
-    if (!projectForTicket) {
-      alert('Project not found for this ticket');
+    if (!projectToUse || !finalTicketId) {
+      alert('Unable to determine project and ticket ID');
       return;
     }
     
-    const url = `${projectForTicket.url}${finalTicketId}`;
+    const url = `${projectToUse.url}${finalTicketId}`;
     chrome.tabs.create({ url: url });
     window.close();
+  }
+  
+  // Helper function to validate URL
+  function isValidUrl(url) {
+    try {
+      new URL(url);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+  
+  // Helper function to generate display name from project key
+  function generateDisplayName(projectKey) {
+    // Convert common patterns to readable names
+    const commonNames = {
+      'PROJ': 'Project',
+      'INC': 'Incident',
+      'TASK': 'Task',
+      'BUG': 'Bug Report',
+      'ISSUE': 'Issue',
+      'ISSUES': 'Issues',
+      'TICKET': 'Ticket',
+      'REQ': 'Request'
+    };
+    
+    return commonNames[projectKey.toUpperCase()] || projectKey;
+  }
+  
+  // Helper function to add a project
+  function addProject(key, displayName, baseUrl) {
+    key = key.trim().toUpperCase();
+    displayName = displayName.trim();
+    baseUrl = baseUrl.trim();
+    
+    if (!key || !displayName || !baseUrl) {
+      alert('All fields are required');
+      return;
+    }
+    
+    if (!/^[A-Z0-9]+$/.test(key)) {
+      alert('Pattern key should only contain letters and numbers');
+      return;
+    }
+    
+    // Check for duplicates
+    if (projects.some(p => p.key === key)) {
+      if (!confirm(`Pattern "${key}" already exists. Do you want to update it?`)) {
+        return;
+      }
+      // Update existing project
+      const existingProject = projects.find(p => p.key === key);
+      existingProject.url = baseUrl;
+      existingProject.displayName = displayName;
+      selectedProject = existingProject; // Auto-select updated project
+    } else {
+      // Add new project
+      const newProject = { key, url: baseUrl, displayName };
+      projects.push(newProject);
+      selectedProject = newProject; // Auto-select newly added project
+    }
+    
+    // Save and refresh
+    saveProjects();
+    renderProjects();
+    renderProjectsList();
+    
+    // Show success message
+    alert(`Pattern "${displayName}" (${key}) added/updated successfully!`);
+  }
+  
+  // Confirmation Modal Functions
+  function showConfirmationModal(extractedInfo, suggestedName) {
+    const modal = document.getElementById('confirmModal');
+    const projectKeyInput = document.getElementById('modalProjectKey');
+    const projectNameInput = document.getElementById('modalProjectName');
+    const baseUrlInput = document.getElementById('modalBaseUrl');
+    const sampleUrl = document.getElementById('sampleUrl');
+    
+    // Pre-fill the modal with extracted data
+    projectKeyInput.value = extractedInfo.projectKey;
+    projectNameInput.value = suggestedName;
+    baseUrlInput.value = extractedInfo.baseUrl;
+    
+    // Update sample URL
+    updateSampleUrl();
+    
+    modal.style.display = 'flex';
+    
+    // Focus on project key for easy editing
+    projectKeyInput.focus();
+    projectKeyInput.select();
+  }
+  
+  function updateSampleUrl() {
+    const projectKey = document.getElementById('modalProjectKey').value;
+    const baseUrl = document.getElementById('modalBaseUrl').value;
+    const sampleUrl = document.getElementById('sampleUrl');
+    
+    if (projectKey && baseUrl) {
+      const sampleTicket = projectKey.includes('-') ? `${projectKey}-123` : `${projectKey}123`;
+      sampleUrl.textContent = baseUrl + sampleTicket;
+    } else {
+      sampleUrl.textContent = 'Sample will appear here...';
+    }
+  }
+  
+  function hideConfirmationModal() {
+    const modal = document.getElementById('confirmModal');
+    modal.style.display = 'none';
+  }
+  
+  // Modal Event Listeners
+  const confirmBtn = document.getElementById('confirmAdd');
+  const cancelBtn = document.getElementById('cancelAdd');
+  const modalProjectKey = document.getElementById('modalProjectKey');
+  const modalBaseUrl = document.getElementById('modalBaseUrl');
+  
+  if (confirmBtn) {
+    confirmBtn.addEventListener('click', () => {
+      const projectKey = document.getElementById('modalProjectKey').value.trim();
+      const projectName = document.getElementById('modalProjectName').value.trim();
+      const baseUrl = document.getElementById('modalBaseUrl').value.trim();
+      
+      if (projectKey && projectName && baseUrl) {
+        // Add the project with confirmed data
+        addProject(projectKey, projectName, baseUrl);
+        hideConfirmationModal();
+      }
+    });
+  }
+  
+  if (cancelBtn) {
+    cancelBtn.addEventListener('click', hideConfirmationModal);
+  }
+  
+  // Update sample URL when inputs change
+  if (modalProjectKey) {
+    modalProjectKey.addEventListener('input', updateSampleUrl);
+  }
+  if (modalBaseUrl) {
+    modalBaseUrl.addEventListener('input', updateSampleUrl);
+  }
+  
+  // Close modal when clicking outside
+  const modal = document.getElementById('confirmModal');
+  if (modal) {
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        hideConfirmationModal();
+      }
+    });
   }
 });

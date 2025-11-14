@@ -364,6 +364,89 @@
       margin: 3px 0;
       font-family: monospace;
     }
+    
+    /* Modal Styles */
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-content {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      width: 350px;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+    .modal-content h3 {
+      margin: 0 0 15px 0;
+      color: #333;
+      text-align: center;
+    }
+    .modal-content .form-group {
+      margin-bottom: 12px;
+    }
+    .modal-content label {
+      font-weight: bold;
+      font-size: 12px;
+      color: #555;
+      margin-bottom: 4px;
+    }
+    .modal-content input[type="text"] {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+    .sample-url {
+      background: #f8f9fa;
+      border: 1px solid #e9ecef;
+      border-radius: 4px;
+      padding: 8px;
+      font-size: 12px;
+      font-family: monospace;
+      color: #0052cc;
+      word-break: break-all;
+    }
+    .modal-buttons {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 20px;
+    }
+    .modal-buttons button {
+      padding: 8px 16px;
+      font-size: 12px;
+      border-radius: 4px;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .modal-buttons .primary {
+      background: #28a745;
+      color: white;
+    }
+    .modal-buttons .primary:hover {
+      background: #218838;
+    }
+    .modal-buttons button:not(.primary) {
+      background: #6c757d;
+      color: white;
+    }
+    .modal-buttons button:not(.primary):hover {
+      background: #5a6268;
+    }
   </style>
 </head>
 <body>
@@ -438,6 +521,41 @@
     </div>
   </div>
   
+  <!-- Confirmation Modal -->
+  <div id="confirmModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <h3>🔍 Confirm Project Details</h3>
+      <p style="font-size: 13px; color: #666; text-align: center; margin: 0 0 15px 0;">
+        Please verify the extracted information:
+      </p>
+      
+      <div class="form-group">
+        <label for="modalProjectKey">Project Key:</label>
+        <input type="text" id="modalProjectKey" placeholder="e.g., PROJ, INC, ISSUES">
+      </div>
+      
+      <div class="form-group">
+        <label for="modalProjectName">Project Name:</label>
+        <input type="text" id="modalProjectName" placeholder="Enter a friendly name">
+      </div>
+      
+      <div class="form-group">
+        <label for="modalBaseUrl">Base URL:</label>
+        <input type="text" id="modalBaseUrl" placeholder="Base URL for tickets">
+      </div>
+      
+      <div class="form-group">
+        <label>Sample URL Preview:</label>
+        <div class="sample-url" id="sampleUrl">Sample will appear here...</div>
+      </div>
+      
+      <div class="modal-buttons">
+        <button id="confirmAdd" class="primary">✅ Add Project</button>
+        <button id="cancelAdd">❌ Cancel</button>
+      </div>
+    </div>
+  </div>
+
   <script src="popup.js"></script>
 </body>
 </html>
