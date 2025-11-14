@@ -1,209 +1,272 @@
-# Universal URL Opener
+# Universal URL Opener 🚀
 
-A Chrome extension that quickly opens URLs with base+identifier patterns. Works with Jira, GitHub, ServiceNow, and any URL-based system for improved productivity.
+A sophisticated Chrome extension that revolutionizes URL navigation with intelligent pattern recognition and context-aware parsing. Transform any URL-based system into a productivity powerhouse for developers, IT professionals, and project managers.
 
-## 🚀 Features
+## 🌟 Key Features
 
-- **Universal Pattern Support**: Works with any URL system that uses base URL + identifier pattern
-- **Smart URL Parsing**: Automatically extracts patterns from full URLs - just paste and go
-- **User-Friendly Display Names**: Add custom names to your URL patterns for easy identification
-- **Intelligent Auto-Selection**: Automatically selects projects when appropriate
-- **Multiple System Support**: Built-in support for Jira, GitHub, ServiceNow, and custom systems
-- **Clean Permissions**: No browsing history access - privacy-focused design
-- **Import/Export Settings**: Backup and share your configuration
+### Core Functionality
+- **🎯 Universal Pattern Support**: Works with any URL system using base URL + identifier patterns
+- **🧠 Smart URL Parsing**: Advanced extraction from complex URLs with priority-based pattern matching  
+- **⚡ Context-Aware Processing**: Prevents namespace conflicts with intelligent project key generation
+- **🎨 Real-Time Modal Editing**: Edit URLs with live preview and instant field updates
+- **⌨️ Keyboard Shortcuts**: Quick access with `Alt+Shift+U` and `Alt+Shift+O`
+- **🔒 Privacy-First Design**: No browsing history access, all data stored locally
 
-## 📋 Supported URL Patterns
+### Advanced Capabilities
+- **Multi-Priority Pattern Recognition**: Dash → Underscore → Dot → Alphanumeric → Numeric parsing
+- **Complex Key Mapping**: Handles intricate project structures (e.g., `COMPANY_DEPT1_PROJ-1560`)
+- **Original Prefix Storage**: Maintains URL construction accuracy for complex identifiers
+- **Intelligent Auto-Selection**: Context-aware project switching based on input patterns
+- **Real-Time Validation**: Live URL preview and extraction feedback
 
-### Built-in Support:
-- **Jira**: `https://company.atlassian.net/browse/PROJ-123`
-- **GitHub Issues**: `https://github.com/owner/repo/issues/456`
-- **ServiceNow**: `https://instance.service-now.com/nav_to.do?uri=INC123456`
-- **Custom Systems**: Any URL with alphanumeric identifier patterns
+## 🎯 Supported Systems & Patterns
 
-### Pattern Examples:
-- `PROJECT-123` format (Jira-style)
-- `#123` format (GitHub-style)
-- `INC123456` format (ServiceNow-style)
-- `CUSTOM-789` format (Generic)
+### Built-in System Support
+| System | Example URL | Pattern | Input Format |
+|--------|-------------|---------|--------------|
+| **Jira** | `https://company.atlassian.net/browse/PROJ-123` | `PROJ-###` | `123` or `PROJ-123` |
+| **GitHub** | `https://github.com/owner/repo/issues/456` | `####` | `456` or `#456` |
+| **ServiceNow** | `https://instance.service-now.com/nav_to.do?uri=INC123456` | `INC######` | `123456` or `INC123456` |
+| **Azure DevOps** | `https://dev.azure.com/org/project/_workitems/edit/789` | `###` | `789` |
+| **Custom Systems** | `https://example.company.com/tickets/CUST-ABC-999` | `CUST-ABC-###` | `999` or `CUST-ABC-999` |
 
-## 🛠️ Installation
+### Advanced Pattern Examples
+- **Complex Keys**: `COMPANY_DEPT1_PROJ-1560` → Correctly maps to `PROJ-1560`
+- **Namespace Resolution**: `ORG1_PROJECTS` vs `ORG1_FOCUS` → Context-aware differentiation
+- **Multi-Level Structures**: `COMPANY_DEPT_PROJ-123` → Intelligent parsing
 
-### From Chrome Web Store (Recommended)
-1. Visit the [Universal URL Opener on Chrome Web Store](chrome-web-store-link)
-2. Click "Add to Chrome"
-3. Confirm installation
-4. The extension icon appears in your toolbar - ready to use!
+## 🛠️ Installation & Setup
 
-*One-click installation, automatic updates, and full Chrome integration.*
+### Option 1: Chrome Web Store (Coming Soon)
+*The extension is ready for Chrome Web Store submission and will be available soon for one-click installation.*
 
-### Manual Installation (For Developers/Testing)
-1. Download or clone this repository
-2. Open Chrome and go to `chrome://extensions/`
-3. Enable "Developer mode" in the top right
-4. Click "Load unpacked" and select the extension folder
-5. The Universal URL Opener icon will appear in your toolbar
+### Option 2: GitHub Installation (Current)
+1. Visit [Universal URL Opener on GitHub](https://github.com/divakar-loganathan/universal-url-opener)
+2. Download or clone the repository
+3. Follow the developer installation steps below
+4. Use `Alt+Shift+U` to open instantly!
 
-*Note: Manual installation is primarily for developers and testing. Regular users should install from the Chrome Web Store for the best experience.*
+### Developer Installation
+```bash
+1. Download/clone this repository
+2. Open Chrome → chrome://extensions/
+3. Enable "Developer mode"
+4. Click "Load unpacked" → Select folder
+5. Ready to use!
+```
 
 ## 📖 Usage Guide
 
+### Quick Start (60 seconds)
+1. **Open Extension**: Click icon or press `Alt+Shift+U`
+2. **Add Pattern**: Switch to Settings → Paste any ticket URL
+3. **Automatic Extraction**: Extension analyzes and creates pattern
+4. **Start Using**: Switch to "Open URL" → Enter ticket number → Go!
+
 ### Adding URL Patterns
-
-1. **Click the extension icon** in your Chrome toolbar
-2. **Go to Settings tab**
-3. **Paste a full URL** with an identifier (e.g., `https://company.atlassian.net/browse/PROJ-123`)
-4. **Add a display name** (optional, e.g., "Work Projects")
-5. **Click "Add Pattern"**
-
-The extension will automatically:
-- Extract the base URL pattern
-- Identify the project key/identifier format
-- Create a reusable URL pattern
+1. **Navigate to Settings tab**
+2. **Paste full URL** (e.g., `https://company.atlassian.net/browse/PROJ-123`)
+3. **Automatic Extraction**: System analyzes URL structure and patterns
+4. **Confirmation Modal**: Review extracted info, edit if needed
+5. **Add Display Name**: Optional user-friendly name
+6. **Save Pattern**: Ready for instant use!
 
 ### Opening URLs
+1. **Quick Open**: `Alt+Shift+O` → Focuses ticket input immediately
+2. **Select Project**: Choose from dropdown or let auto-selection work
+3. **Enter Identifier**: 
+   - Simple: `123` → Expands to `PROJ-123`
+   - Full: `PROJ-456` → Auto-switches to correct project
+   - Complex: `PROJ-789` → Uses original prefix mapping
+4. **Open**: Click button or press Enter
 
-1. **Click the extension icon**
-2. **Select your URL pattern** from the list
-3. **Enter just the identifier** (e.g., `123` or `PROJ-123`)
-4. **Click "Open URL"** or press Enter
+## ⌨️ Keyboard Shortcuts
 
-### Smart Input Features
+| Shortcut | Action | Description |
+|----------|--------|-------------|
+| `Alt+Shift+U` | Open Extension | Quick access to main interface |
+| `Alt+Shift+O` | Quick Ticket Entry | Opens with focus on ticket input |
 
-- **Just numbers**: Enter `123` → Opens as `PROJ-123`
-- **Full identifier**: Enter `PROJ-456` → Opens correctly even if different project
-- **Auto-detection**: Switches to correct project if identifier contains project key
+> **Note**: Shortcuts are customizable via `chrome://extensions/shortcuts`
 
-## ⚙️ Configuration
+## 🧠 Advanced Features
 
-### Display Names
-- Add user-friendly names to your URL patterns
-- Edit names in-place from the Settings tab
-- Format in dropdown: `Display Name (PROJECT_KEY)`
+### Context-Aware Project Resolution
+- **Namespace Conflict Prevention**: Distinguishes between similar project keys
+- **Domain + Path Analysis**: Uses full URL context for accurate identification
+- **Priority-Based Parsing**: 5-tier pattern recognition for maximum accuracy
 
-### Import/Export
-- **Export**: Backup your URL patterns to a JSON file
-- **Import**: Restore settings from a backup file
-- Perfect for sharing configurations across devices
+### Real-Time Modal Editing
+- **Editable Original URLs**: Fix typos directly in confirmation modal
+- **Live Field Updates**: Changes automatically reflect in all fields
+- **Instant Preview**: See final URL before saving
 
-## 🔧 Technical Details
+### Smart Input Processing
+```
+Input: "123" → Output: "PROJ-123" (auto-expansion)
+Input: "PROJ-456" → Switches to PROJ project, opens 456
+Input: "PROJ-789" → Uses original prefix mapping for accurate URL
+```
 
-### Permissions
-- **Storage**: Save your URL patterns locally
-- **No browsing history access**: Privacy-focused design
-- **No additional site access**: Minimal permissions for security
-
-### Browser Compatibility
-- **Chrome** (88+) - Full support ✓
-- **Microsoft Edge** (88+) - Full support ✓
-- **Opera** (74+) - Full support ✓
-- **Brave Browser** - Full support ✓
-- **Other Chromium-based browsers** - Full support ✓
-- **Firefox** - Not compatible (requires separate Firefox version)*
-- **Safari** - Not compatible (different extension system)*
-
-*Firefox and Safari versions would require separate development due to different extension APIs and manifest formats.
-
-## 🎯 Use Cases
-
-### Development Teams
-- Quick access to Jira tickets: `PROJ-123`
-- GitHub issue navigation: `#456`
-- Pull request links: `PR-789`
-
-### IT/Support Teams
-- ServiceNow incidents: `INC123456`
-- Service requests: `REQ789012`
-- Change requests: `CHG345678`
+## 🔧 Configuration & Management
 
 ### Project Management
-- Task tracking systems
-- Bug reporting tools
-- Custom workflow systems
+- **In-Place Editing**: Click project names to edit directly
+- **Display Names**: Add user-friendly names for easy identification
+- **Original Prefix Storage**: Maintains complex URL construction accuracy
+- **Auto-Selection Logic**: Smart project switching based on input patterns
 
-## 🚀 Getting Started
+### Data Management
+- **Export Settings**: Backup configurations to JSON
+- **Import Settings**: Restore from backup files
+- **Local Storage**: All data stored securely in browser
+- **No External Dependencies**: Works completely offline
 
-### Quick Setup (2 minutes)
-1. **Install** the extension
-2. **Paste a sample URL** (e.g., copy a Jira ticket URL from your browser)
-3. **Add a display name** (e.g., "Work Tickets")
-4. **Test it**: Enter just the ticket number and click Open
+## 🎯 Real-World Use Cases
 
-### Pro Tips
-- **Use descriptive display names**: "Customer Support Tickets" instead of just "SUP"
-- **Add multiple patterns**: Different Jira instances, GitHub repos, etc.
-- **Export your settings**: Backup configurations before major changes
+### Development Teams
+```
+Before: https://company.atlassian.net/browse/FRONTEND-1245
+After:  Type "1245" → Instant open
+```
+
+### IT Support
+```
+Before: https://company.service-now.com/nav_to.do?uri=INC0012345
+After:  Type "12345" → Direct navigation
+```
+
+### Project Management
+```
+Before: https://github.com/company/project/issues/789
+After:  Type "#789" → Quick access
+```
 
 ## 🔒 Privacy & Security
 
-- **No data collection**: All settings stored locally in your browser
-- **No external requests**: Extension works entirely offline
-- **Minimal permissions**: Only storage access required
-- **No tracking**: No analytics or usage monitoring
+### Privacy Guarantees
+- ✅ **Zero Data Collection**: No analytics, tracking, or external requests
+- ✅ **Local Storage Only**: All settings stored in browser
+- ✅ **Minimal Permissions**: Only storage access required
+- ✅ **No Network Access**: Works completely offline
+- ✅ **No Browsing History**: Cannot access or monitor browsing
+
+### Security Features
+- **Input Validation**: Prevents malicious URL injection
+- **Pattern Sanitization**: Cleanses extracted patterns
+- **Safe URL Construction**: Validates all generated URLs
 
 ## 🆘 Troubleshooting
 
-### Common Issues
+### Common Solutions
 
-**URL pattern not detected?**
-- Ensure the URL contains a clear identifier pattern
-- Try entering the pattern key manually
-- Check the "Example URL Patterns" section for supported formats
+**Pattern Not Detected?**
+- Ensure URL contains clear identifier (numbers/letters)
+- Check the 5-tier pattern priority system
+- Try manual project key entry
 
-**Extension not working?**
-- Reload the extension from `chrome://extensions/`
-- Check that the extension is enabled
-- Verify URL patterns are correctly configured
+**Extension Not Responding?**
+- Reload extension: `chrome://extensions/` → Reload
+- Check keyboard shortcuts: `chrome://extensions/shortcuts`
+- Verify permissions are granted
 
-**Settings not saving?**
-- Check Chrome storage permissions
-- Try export/import to backup settings
-- Reload the extension if issues persist
+**URL Opening Incorrectly?**
+- Check original prefix mapping in settings
+- Verify base URL is correctly extracted
+- Use real-time modal editing to fix patterns
 
-### Getting Help
-- Check the "Example URL Patterns" in the Settings tab
-- Ensure URLs follow base+identifier pattern
-- Test with simple examples first (Jira, GitHub)
+**Complex Keys Not Working?**
+- Ensure original prefix is stored correctly
+- Check namespace conflict resolution
+- Review context-aware parsing logs
+
+## 📊 Technical Architecture
+
+### Pattern Recognition Engine
+```javascript
+Priority 1: Dash patterns (PROJ-123)
+Priority 2: Underscore (PROJ_123)
+Priority 3: Dot notation (PROJ.123)
+Priority 4: Alphanumeric (PROJ123)
+Priority 5: Numeric only (123)
+```
+
+### Context-Aware Processing
+- **Domain Analysis**: Extracts base domain for context
+- **Path Parsing**: Analyzes URL structure for accurate identification
+- **Namespace Resolution**: Prevents conflicts between similar keys
+
+### Smart Storage System
+- **Original Prefix Mapping**: Preserves complex key structures
+- **Context Preservation**: Maintains URL construction accuracy
+- **Conflict Prevention**: Intelligent namespace management
 
 ## 📈 Version History
 
-### Version 2.0 (Current)
-- Universal URL pattern support
-- Smart auto-selection logic
-- User-friendly display names
-- Clean permissions (no browsing history)
-- Import/export functionality
-- Enhanced UI with tabbed interface
+### Version 2.1 (Current)
+- ✨ **Keyboard Shortcuts**: `Alt+Shift+U` and `Alt+Shift+O`
+- ✨ **Real-Time Modal Editing**: Live URL editing with instant updates
+- ✨ **Original URL Pre-filling**: Modal shows actual pasted URL
+- 🔧 **Background Service Worker**: Enhanced shortcut handling
+- 🧹 **Code Quality**: Removed debug logs, production-ready codebase
+
+### Version 2.0 (Major Release)
+- 🚀 **Context-Aware Parsing**: Namespace conflict resolution
+- 🚀 **Complex Key Mapping**: Original prefix storage system
+- 🚀 **Privacy Improvements**: Removed hardcoded project names
+- 🚀 **Universal Pattern Support**: 5-tier recognition system
+- 🚀 **Smart Auto-Selection**: Intelligent project switching
 
 ### Version 1.0 (Legacy)
 - Basic Jira ticket opening
 - Simple project management
 
-## 🤝 Contributing & Credits
+## 🤝 Contributing & Development
 
-**Created by:** Divakar Loganathan  
-**Version:** 2.0  
-**Year:** 2025  
+**Author**: Divakar Loganathan  
+**Version**: 2.1  
+**License**: MIT  
+**Repository**: [GitHub - Universal URL Opener](https://github.com/divakar-loganathan/universal-url-opener)
 
-This extension was developed to solve real productivity challenges in development and IT workflows. Feedback and suggestions are welcome!
+### Development Setup
+```bash
+git clone https://github.com/divakar-loganathan/universal-url-opener.git
+cd universal-url-opener
+# Load as unpacked extension in Chrome
+```
 
-### Future Enhancements
-- Additional built-in system support
-- Custom URL templates
-- Keyboard shortcuts
-- Team sharing features
+### Roadmap
+- [ ] Team configuration sharing
+- [ ] Advanced pattern templates
+- [ ] Multi-browser sync
+- [ ] Custom keyboard shortcuts
+- [ ] Bulk URL operations
+
+## ⚖️ Disclaimer
+
+This extension is an independent project and is **not affiliated with, endorsed by, or sponsored by** any of the mentioned companies or services. All product and company names are trademarks™ or registered® trademarks of their respective holders.
+
+**Mentioned services and their respective owners:**
+- **Jira** - Trademark of Atlassian Pty Ltd.
+- **GitHub** - Trademark of GitHub, Inc. (Microsoft Corporation)
+- **ServiceNow** - Trademark of ServiceNow, Inc.
+- **Azure DevOps** - Trademark of Microsoft Corporation
+- **Chrome** - Trademark of Google LLC
+
+This extension simply provides URL navigation functionality and does not modify, access, or interfere with the operation of these services. Use of their names is solely for descriptive purposes to indicate compatibility.
 
 ## 📄 License
 
-MIT License - Created by Divakar Loganathan (2025)
+MIT License - Copyright (c) 2025 Divakar Loganathan
 
-This extension is provided as-is for productivity enhancement. Feel free to modify for personal use.
+Permission granted for personal and commercial use with attribution.
 
-**Attribution:** Please maintain credit to the original creator when sharing or modifying this extension.
+## 🏷️ Tags
 
-## 🏷️ Keywords
-
-Chrome Extension, URL Opener, Jira, GitHub, ServiceNow, Productivity, Development Tools, Project Management, Ticket System, Issue Tracking, Workflow Automation
+`Chrome Extension` `URL Management` `Productivity` `Jira` `GitHub` `ServiceNow` `Development Tools` `IT Tools` `Project Management` `Ticket System` `Issue Tracking` `Workflow Automation` `Context-Aware` `Pattern Recognition`
 
 ---
 
-*Universal URL Opener - Making URL navigation simple and fast for developers, IT professionals, and project managers.*
+**Universal URL Opener** - Transforming URL navigation with intelligent pattern recognition and context-aware processing for modern development workflows.
+
+*⭐ Star this project on GitHub if it improves your productivity!*

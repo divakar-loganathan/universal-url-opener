@@ -2,11 +2,12 @@
 <!--
   Universal URL Opener - Chrome Extension
   Author: Divakar Loganathan
-  Version: 2.0
+  Version: 2.1
   Description: Quick URL opening with base+identifier patterns
 -->
 <html>
 <head>
+  <meta charset="UTF-8">
   <title>Universal URL Opener</title>
   <style>
     body {
@@ -15,6 +16,38 @@
       font-family: Arial, sans-serif;
       min-height: 400px;
     }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 15px;
+    }
+
+    .header h3 {
+      margin: 0;
+      color: #333;
+      font-size: 18px;
+    }
+
+    .keyboard-hint {
+      text-align: right;
+      opacity: 0.7;
+      font-size: 10px;
+      color: #666;
+      line-height: 1.2;
+    }
+
+    .keyboard-hint span {
+      font-size: 12px;
+      margin-right: 3px;
+    }
+
+    .keyboard-hint small {
+      display: block;
+      margin-top: 2px;
+    }
+
     h3 {
       margin-top: 0;
       color: #333;
@@ -450,7 +483,13 @@
   </style>
 </head>
 <body>
-  <h3>Universal URL Opener</h3>
+  <div class="header">
+    <h3>Universal URL Opener</h3>
+    <div class="keyboard-hint">
+      <span title="Keyboard shortcuts">⌨️</span>
+      <small>Alt+Shift+U to open | Alt+Shift+O for quick ticket</small>
+    </div>
+  </div>
   
   <div class="tab-container">
     <button class="tab active" data-tab="opener">Open URL</button>
@@ -530,13 +569,18 @@
       </p>
       
       <div class="form-group">
+        <label for="modalOriginalUrl">Original URL (You can edit this):</label>
+        <input type="url" id="modalOriginalUrl" placeholder="The URL you pasted - edit if needed">
+      </div>
+      
+      <div class="form-group">
         <label for="modalProjectKey">Project Key:</label>
         <input type="text" id="modalProjectKey" placeholder="e.g., PROJ, INC, ISSUES">
       </div>
       
       <div class="form-group">
-        <label for="modalProjectName">Project Name:</label>
-        <input type="text" id="modalProjectName" placeholder="Enter a friendly name">
+        <label for="modalProjectName">Project Name (Optional - User-friendly display name):</label>
+        <input type="text" id="modalProjectName" placeholder="Leave empty to use project key as name">
       </div>
       
       <div class="form-group">

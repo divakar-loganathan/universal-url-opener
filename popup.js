@@ -5,10 +5,25 @@
  * Supports Jira, GitHub, ServiceNow, and any URL-based system.
  * 
  * @author Divakar Loganathan
- * @version 2.0
+ * @version 2.1
  * @license MIT
  * @created 2025
  */
+
+// Listen for messages from background script for keyboard shortcuts
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action === 'focus_ticket_input') {
+    // Focus on ticket input if extension is in "Open Ticket" mode
+    const ticketInput = document.getElementById('ticketNumber');
+    if (ticketInput && ticketInput.style.display !== 'none') {
+      setTimeout(() => {
+        ticketInput.focus();
+        ticketInput.select();
+      }, 100);
+    }
+    sendResponse({success: true});
+  }
+});
 
 document.addEventListener('DOMContentLoaded', function() {
   let projects = [];
@@ -37,14 +52,6 @@ document.addEventListener('DOMContentLoaded', function() {
   // Initialize
   loadProjects();
   
-  // Debug: Check if all elements are found
-  console.log('DOM Elements Check:');
-  console.log('addProjectBtn:', addProjectBtn);
-  console.log('newProjectKey:', newProjectKey);
-  console.log('newProjectUrl:', newProjectUrl);
-  console.log('newProjectName:', newProjectName);
-  console.log('projectsList:', projectsList);
-  
   // Add real-time URL preview
   if (newProjectUrl) {
     newProjectUrl.addEventListener('input', updatePreview);
@@ -61,8 +68,8 @@ document.addEventListener('DOMContentLoaded', function() {
     if (urlInput && isValidUrl(urlInput)) {
       const extractedInfo = extractProjectInfo(urlInput);
       if (extractedInfo) {
-        // Show confirmation modal instead of auto-preview
-        showConfirmationModal(extractedInfo, nameInput || generateDisplayName(extractedInfo.projectKey));
+        // Show confirmation modal - let user decide the name
+        showConfirmationModal(extractedInfo, urlInput);
         // Clear inputs since modal will handle the process
         setTimeout(() => {
           newProjectUrl.value = '';
@@ -98,7 +105,6 @@ document.addEventListener('DOMContentLoaded', function() {
   tabs.forEach(tab => {
     tab.addEventListener('click', function() {
       const tabName = this.dataset.tab;
-      console.log('Switching to tab:', tabName); // Debug log
       
       // Update tab appearance
       tabs.forEach(t => t.classList.remove('active'));
@@ -108,9 +114,6 @@ document.addEventListener('DOMContentLoaded', function() {
       const targetTab = document.getElementById(tabName + 'Tab');
       if (targetTab) {
         targetTab.classList.add('active');
-        console.log('Activated tab:', tabName + 'Tab'); // Debug log
-      } else {
-        console.error('Tab not found:', tabName + 'Tab'); // Debug log
       }
       
       // Focus on ticket input when switching to opener tab
@@ -123,14 +126,10 @@ document.addEventListener('DOMContentLoaded', function() {
   // Add project functionality
   if (addProjectBtn) {
     addProjectBtn.addEventListener('click', function() {
-      console.log('Add project button clicked'); // Debug log
-      
       try {
         let key = newProjectKey.value.trim().toUpperCase();
         let urlInput = newProjectUrl.value.trim();
         let displayName = newProjectName.value.trim();
-        
-        console.log('Original input - Key:', key, 'URL:', urlInput, 'Name:', displayName); // Debug log
         
         if (!urlInput) {
           alert('Please enter a URL');
@@ -156,8 +155,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         const baseUrl = extractedInfo.baseUrl;
-        
-        console.log('Processed - Key:', key, 'Base URL:', baseUrl, 'Display Name:', displayName); // Debug log
         
         if (!key) {
           alert('Could not extract pattern key from URL. Please enter it manually.');
@@ -186,9 +183,6 @@ document.addEventListener('DOMContentLoaded', function() {
           selectedProject = newProject; // Auto-select newly added project
         }
         
-        console.log('Project processed:', { key, url: baseUrl, displayName }); // Debug log
-        console.log('All projects:', projects); // Debug log
-        
         // Clear inputs
         newProjectKey.value = '';
         newProjectUrl.value = '';
@@ -202,7 +196,6 @@ document.addEventListener('DOMContentLoaded', function() {
         saveProjects();
         renderProjects();
         renderProjectsList();
-        console.log('Project saved and rendered successfully'); // Debug log
         
         // Show success message
         alert(`Pattern "${displayName}" (${key}) added/updated successfully!`);
@@ -218,8 +211,6 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Function to extract project information from full URL
   function extractProjectInfo(fullUrl) {
-    console.log('Extracting info from URL:', fullUrl); // Debug log
-    
     try {
       // Parse the URL
       const url = new URL(fullUrl);
@@ -274,7 +265,12 @@ document.addEventListener('DOMContentLoaded', function() {
           const projectKey = createContextualKey(domain, contextPath, prefix);
           const basePath = pathname.substring(0, pathname.indexOf(fullMatch) + 1);
           const baseUrl = `${url.protocol}//${url.host}${basePath}`;
-          extractedInfo = { projectKey, baseUrl, ticketId: `${prefix}-${number}` };
+          extractedInfo = { 
+            projectKey, 
+            baseUrl, 
+            ticketId: `${prefix}-${number}`,
+            originalPrefix: prefix // Store original prefix for URL construction
+          };
         }
         
         // Priority 2: Underscore delimited with context - /path/PREFIX_123
@@ -286,7 +282,12 @@ document.addEventListener('DOMContentLoaded', function() {
             const projectKey = createContextualKey(domain, contextPath, prefix);
             const basePath = pathname.substring(0, pathname.indexOf(fullMatch) + 1);
             const baseUrl = `${url.protocol}//${url.host}${basePath}`;
-            extractedInfo = { projectKey, baseUrl, ticketId: `${prefix}_${number}` };
+            extractedInfo = { 
+              projectKey, 
+              baseUrl, 
+              ticketId: `${prefix}_${number}`,
+              originalPrefix: prefix
+            };
           }
         }
         
@@ -299,7 +300,12 @@ document.addEventListener('DOMContentLoaded', function() {
             const projectKey = createContextualKey(domain, contextPath, prefix);
             const basePath = pathname.substring(0, pathname.indexOf(fullMatch) + 1);
             const baseUrl = `${url.protocol}//${url.host}${basePath}`;
-            extractedInfo = { projectKey, baseUrl, ticketId: `${prefix}.${number}` };
+            extractedInfo = { 
+              projectKey, 
+              baseUrl, 
+              ticketId: `${prefix}.${number}`,
+              originalPrefix: prefix
+            };
           }
         }
         
@@ -312,7 +318,12 @@ document.addEventListener('DOMContentLoaded', function() {
             const projectKey = createContextualKey(domain, contextPath, prefix);
             const basePath = pathname.substring(0, pathname.indexOf(fullMatch) + 1);
             const baseUrl = `${url.protocol}//${url.host}${basePath}`;
-            extractedInfo = { projectKey, baseUrl, ticketId: `${prefix}${number}` };
+            extractedInfo = { 
+              projectKey, 
+              baseUrl, 
+              ticketId: `${prefix}${number}`,
+              originalPrefix: prefix
+            };
           }
         }
         
@@ -350,7 +361,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
       }
       
-      console.log('Extracted:', extractedInfo); // Debug log
       return extractedInfo;
       
     } catch (error) {
@@ -438,7 +448,6 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Functions
   function loadProjects() {
-    console.log('Loading projects from storage...'); // Debug log
     chrome.storage.sync.get(['jiraProjects', 'lastSelectedProject'], function(result) {
       if (chrome.runtime.lastError) {
         console.error('Storage load error:', chrome.runtime.lastError);
@@ -446,11 +455,8 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
       }
       
-      console.log('Loaded from storage:', result); // Debug log
       projects = result.jiraProjects || [];
       const lastSelected = result.lastSelectedProject;
-      
-      console.log('Projects loaded:', projects); // Debug log
       
       // Select last used project BEFORE rendering (if valid)
       if (lastSelected && projects.some(p => p.key === lastSelected)) {
@@ -463,7 +469,6 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   
   function saveProjects() {
-    console.log('Saving projects:', projects); // Debug log
     try {
       chrome.storage.sync.set({ 
         jiraProjects: projects,
@@ -472,8 +477,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (chrome.runtime.lastError) {
           console.error('Storage error:', chrome.runtime.lastError);
           alert('Error saving to storage: ' + chrome.runtime.lastError.message);
-        } else {
-          console.log('Projects saved successfully to storage');
         }
       });
     } catch (error) {
@@ -568,8 +571,6 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   
   function renderProjectsList() {
-    console.log('Rendering projects list, count:', projects.length); // Debug log
-    
     if (projects.length === 0) {
       projectsList.innerHTML = '<div class="no-projects">No projects configured yet.</div>';
       return;
@@ -577,7 +578,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     projectsList.innerHTML = '';
     projects.forEach((project, index) => {
-      console.log('Rendering project:', project); // Debug log
       const item = document.createElement('div');
       item.className = 'project-item';
       item.innerHTML = `
@@ -745,13 +745,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // If no project key detected and no project selected, ask user to select
-    if (!hasProjectKey && !hasNonDashKey && !selectedProject) {
+    if (!hasProjectKey && !selectedProject) {
       alert('Please select a project first or enter a full ticket ID (e.g., PROJ-123 or PROJ123)');
       return;
     }
     
     // If no project key detected, use the selected project with the number
-    if (!hasProjectKey && !hasNonDashKey && selectedProject) {
+    if (!hasProjectKey && selectedProject) {
       // Remove any project prefix that might be incorrectly included
       let cleanNumber = ticketInput;
       allProjectKeys.forEach(projectKey => {
@@ -763,7 +763,9 @@ document.addEventListener('DOMContentLoaded', function() {
       cleanNumber = cleanNumber.replace(/[^0-9]/g, '');
       
       if (cleanNumber) {
-        finalTicketId = `${selectedProject.key}-${cleanNumber}`;
+        // Use original prefix if available, otherwise use project key
+        const prefixToUse = selectedProject.originalPrefix || selectedProject.key;
+        finalTicketId = `${prefixToUse}-${cleanNumber}`;
         projectToUse = selectedProject;
       } else {
         // Invalid input
@@ -797,34 +799,28 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Helper function to generate display name from project key
   function generateDisplayName(projectKey) {
-    // Convert common patterns to readable names
-    const commonNames = {
-      'PROJ': 'Project',
-      'INC': 'Incident',
-      'TASK': 'Task',
-      'BUG': 'Bug Report',
-      'ISSUE': 'Issue',
-      'ISSUES': 'Issues',
-      'TICKET': 'Ticket',
-      'REQ': 'Request'
-    };
-    
-    return commonNames[projectKey.toUpperCase()] || projectKey;
+    // Simple fallback - just add "Project" suffix to make it user-friendly
+    return `${projectKey} Project`;
   }
   
   // Helper function to add a project
-  function addProject(key, displayName, baseUrl) {
+  function addProject(key, displayName, baseUrl, originalPrefix = null) {
     key = key.trim().toUpperCase();
     displayName = displayName.trim();
     baseUrl = baseUrl.trim();
     
-    if (!key || !displayName || !baseUrl) {
-      alert('All fields are required');
+    if (!key || !baseUrl) {
+      alert('Project Key and Base URL are required');
       return;
     }
     
-    if (!/^[A-Z0-9]+$/.test(key)) {
-      alert('Pattern key should only contain letters and numbers');
+    // Use project key as display name if none provided
+    if (!displayName) {
+      displayName = key;
+    }
+    
+    if (!/^[A-Z0-9_]+$/.test(key)) {
+      alert('Project key should only contain letters, numbers, and underscores');
       return;
     }
     
@@ -837,10 +833,16 @@ document.addEventListener('DOMContentLoaded', function() {
       const existingProject = projects.find(p => p.key === key);
       existingProject.url = baseUrl;
       existingProject.displayName = displayName;
+      if (originalPrefix) {
+        existingProject.originalPrefix = originalPrefix;
+      }
       selectedProject = existingProject; // Auto-select updated project
     } else {
       // Add new project
       const newProject = { key, url: baseUrl, displayName };
+      if (originalPrefix) {
+        newProject.originalPrefix = originalPrefix;
+      }
       projects.push(newProject);
       selectedProject = newProject; // Auto-select newly added project
     }
@@ -855,35 +857,78 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   
   // Confirmation Modal Functions
-  function showConfirmationModal(extractedInfo, suggestedName) {
+  function showConfirmationModal(extractedInfo, originalUrl) {
     const modal = document.getElementById('confirmModal');
+    const originalUrlInput = document.getElementById('modalOriginalUrl');
     const projectKeyInput = document.getElementById('modalProjectKey');
     const projectNameInput = document.getElementById('modalProjectName');
     const baseUrlInput = document.getElementById('modalBaseUrl');
     const sampleUrl = document.getElementById('sampleUrl');
     
-    // Pre-fill the modal with extracted data
+    // Pre-fill the modal with extracted data and original URL
+    originalUrlInput.value = originalUrl || '';
     projectKeyInput.value = extractedInfo.projectKey;
-    projectNameInput.value = suggestedName;
+    projectNameInput.value = ''; // Leave empty - let user decide
+    projectNameInput.placeholder = `Will default to: ${extractedInfo.projectKey}`;
     baseUrlInput.value = extractedInfo.baseUrl;
+    
+    // Store original ticket format and prefix for accurate URL construction
+    modal.setAttribute('data-original-ticket', extractedInfo.ticketId);
+    if (extractedInfo.originalPrefix) {
+      modal.setAttribute('data-original-prefix', extractedInfo.originalPrefix);
+    }
     
     // Update sample URL
     updateSampleUrl();
     
     modal.style.display = 'flex';
     
-    // Focus on project key for easy editing
-    projectKeyInput.focus();
-    projectKeyInput.select();
+    // Focus on original URL for easy editing
+    originalUrlInput.focus();
+    originalUrlInput.select();
   }
   
   function updateSampleUrl() {
     const projectKey = document.getElementById('modalProjectKey').value;
     const baseUrl = document.getElementById('modalBaseUrl').value;
     const sampleUrl = document.getElementById('sampleUrl');
+    const modal = document.getElementById('confirmModal');
     
     if (projectKey && baseUrl) {
-      const sampleTicket = projectKey.includes('-') ? `${projectKey}-123` : `${projectKey}123`;
+      // Try to use original ticket format if available
+      const originalTicket = modal ? modal.getAttribute('data-original-ticket') : null;
+      const originalPrefix = modal ? modal.getAttribute('data-original-prefix') : null;
+      let sampleTicket;
+      
+      if (originalTicket && originalPrefix) {
+        // Use original prefix for accurate URL construction
+        if (originalTicket.includes('-')) {
+          sampleTicket = `${originalPrefix}-123`;
+        } else if (originalTicket.match(/^[A-Z]+\d+$/)) {
+          sampleTicket = `${originalPrefix}123456`;
+        } else {
+          sampleTicket = `${originalPrefix}123`;
+        }
+      } else {
+        // Fallback to smart detection based on URL pattern
+        if (baseUrl.includes('/browse/') || baseUrl.includes('atlassian')) {
+          // For complex keys, try to extract the original prefix
+          const simplifiedKey = projectKey.includes('_') ? 
+            projectKey.split('_').pop() : projectKey;
+          sampleTicket = `${simplifiedKey}-123`;
+        } else if (baseUrl.includes('github.com')) {
+          sampleTicket = '123';
+        } else if (baseUrl.includes('service-now') || baseUrl.includes('uri=')) {
+          const simplifiedKey = projectKey.includes('_') ? 
+            projectKey.split('_').pop() : projectKey;
+          sampleTicket = `${simplifiedKey}123456`;
+        } else if (projectKey.includes('_')) {
+          sampleTicket = '123';
+        } else {
+          sampleTicket = `${projectKey}-123`;
+        }
+      }
+      
       sampleUrl.textContent = baseUrl + sampleTicket;
     } else {
       sampleUrl.textContent = 'Sample will appear here...';
@@ -906,11 +951,15 @@ document.addEventListener('DOMContentLoaded', function() {
       const projectKey = document.getElementById('modalProjectKey').value.trim();
       const projectName = document.getElementById('modalProjectName').value.trim();
       const baseUrl = document.getElementById('modalBaseUrl').value.trim();
+      const modal = document.getElementById('confirmModal');
+      const originalPrefix = modal.getAttribute('data-original-prefix');
       
-      if (projectKey && projectName && baseUrl) {
-        // Add the project with confirmed data
-        addProject(projectKey, projectName, baseUrl);
+      if (projectKey && baseUrl) {
+        // Add the project with confirmed data (projectName can be empty)
+        addProject(projectKey, projectName || projectKey, baseUrl, originalPrefix);
         hideConfirmationModal();
+      } else {
+        alert('Project Key and Base URL are required');
       }
     });
   }
@@ -925,6 +974,45 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   if (modalBaseUrl) {
     modalBaseUrl.addEventListener('input', updateSampleUrl);
+  }
+  
+  // Real-time URL re-extraction when user edits original URL
+  const modalOriginalUrl = document.getElementById('modalOriginalUrl');
+  if (modalOriginalUrl) {
+    modalOriginalUrl.addEventListener('input', function() {
+      const newUrl = this.value.trim();
+      
+      if (newUrl) {
+        try {
+          // Re-extract project info from the new URL
+          const extractedInfo = extractProjectInfo(newUrl);
+          
+          if (extractedInfo) {
+            // Update fields with new extraction
+            if (modalProjectKey) modalProjectKey.value = extractedInfo.projectKey;
+            if (modalProjectName) modalProjectName.placeholder = `Will default to: ${extractedInfo.projectKey}`;
+            if (modalBaseUrl) modalBaseUrl.value = extractedInfo.baseUrl;
+            
+            // Update stored data attributes
+            const modal = document.getElementById('confirmModal');
+            if (modal) {
+              modal.setAttribute('data-original-ticket', extractedInfo.ticketId);
+              if (extractedInfo.originalPrefix) {
+                modal.setAttribute('data-original-prefix', extractedInfo.originalPrefix);
+              } else {
+                modal.removeAttribute('data-original-prefix');
+              }
+            }
+            
+            // Update sample URL display
+            updateSampleUrl();
+          }
+        } catch (error) {
+          console.log('URL re-extraction failed:', error);
+          // Don't update fields on extraction failure - let user continue editing
+        }
+      }
+    });
   }
   
   // Close modal when clicking outside
